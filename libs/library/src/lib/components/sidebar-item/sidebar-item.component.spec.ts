@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
-import { ISidebarProfile, SidebarMenu } from '../../models';
+import { ISidebarProfile, SidebarMenu, SidebarMenuOpenMode } from '../../models';
 import { SidebarService } from '../../services';
 import { SidebarItemComponent } from './sidebar-item.component';
 
@@ -21,6 +21,10 @@ class MockSidebarService extends SidebarService {
 
 function leafMenu(): SidebarMenu {
   return new SidebarMenu({ id: 1, label: 'Dashboard', icon: 'fa-chart-line', url: '/dashboard' });
+}
+
+function externalLeafMenu(openMode: SidebarMenuOpenMode): SidebarMenu {
+  return new SidebarMenu({ id: 2, label: 'Monthly report', url: 'https://reports/monthly', openMode });
 }
 
 describe(SidebarItemComponent.name, () => {
@@ -44,6 +48,38 @@ describe(SidebarItemComponent.name, () => {
 
   it('should create', () => {
     expect(createComponent(leafMenu()).componentInstance).toBeTruthy();
+  });
+
+  it('marks an item that opens in a new browser tab, so the label carries an outbound affordance', () => {
+    const fixture = createComponent(externalLeafMenu(SidebarMenuOpenMode.ExternalNewTab));
+
+    const row: HTMLElement = fixture.nativeElement.querySelector('li > div');
+    expect(row.classList.contains('external')).toBe(true);
+    expect(fixture.nativeElement.querySelector('a').getAttribute('title')).toBeTruthy();
+  });
+
+  it('does not mark an embedded item, which stays inside the application', () => {
+    const fixture = createComponent(externalLeafMenu(SidebarMenuOpenMode.ExternalEmbedded));
+
+    const row: HTMLElement = fixture.nativeElement.querySelector('li > div');
+    expect(row.classList.contains('external')).toBe(false);
+    expect(fixture.nativeElement.querySelector('a').getAttribute('title')).toBeNull();
+  });
+
+  it('does not mark an internal item', () => {
+    const fixture = createComponent(leafMenu());
+
+    const row: HTMLElement = fixture.nativeElement.querySelector('li > div');
+    expect(row.classList.contains('external')).toBe(false);
+  });
+
+  it('delegates a click to the service exactly once, so an external item cannot open twice', () => {
+    const fixture = createComponent(externalLeafMenu(SidebarMenuOpenMode.ExternalNewTab));
+    const select: jest.SpyInstance = jest.spyOn(service, 'select').mockImplementation(() => undefined);
+
+    fixture.nativeElement.querySelector('li > div').click();
+
+    expect(select).toHaveBeenCalledTimes(1);
   });
 
   it('reflects selection to the state class for the pill highlight', () => {

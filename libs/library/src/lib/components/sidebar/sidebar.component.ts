@@ -1,7 +1,7 @@
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { AfterViewInit, Component, HostListener, inject, OnInit } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { take, takeUntil } from 'rxjs';
+import { merge, take, takeUntil } from 'rxjs';
 import { SIDEBAR_CONFIGS, SidebarConfigs, SidebarMenu, SidebarRegion } from '../../models';
 import { SidebarService } from '../../services';
 import { BaseComponent } from '../base.component';
@@ -103,7 +103,7 @@ export class SidebarComponent extends BaseComponent implements AfterViewInit, On
   }
 
   public ngOnInit(): void {
-    this.sidebarService.menuUrlSelected
+    merge(this.sidebarService.menuUrlSelected, this.sidebarService.menuExternalUrlSelected)
       .pipe(takeUntil(this.destroy$))
       .subscribe((_menu: SidebarMenu) => this.deactivate());
 

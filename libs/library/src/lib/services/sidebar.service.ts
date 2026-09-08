@@ -1,6 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { map, Observable, take, tap } from 'rxjs';
-import { ISidebarProfile, SidebarMenu } from '../models';
+import { ISidebarProfile, SidebarMenu, SidebarMenuOpenMode, toSidebarMenuOpenMode } from '../models';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable({
@@ -11,6 +11,7 @@ export abstract class SidebarService {
   public childrenFailed: EventEmitter<SidebarMenu> = new EventEmitter<SidebarMenu>();
   public childrenLoading: EventEmitter<SidebarMenu> = new EventEmitter<SidebarMenu>();
   public childrenInitialized: EventEmitter<SidebarMenu> = new EventEmitter<SidebarMenu>();
+  public menuExternalUrlSelected: EventEmitter<SidebarMenu> = new EventEmitter<SidebarMenu>();
   public menuUrlSelected: EventEmitter<SidebarMenu> = new EventEmitter<SidebarMenu>();
   public selectionChanged: EventEmitter<SidebarMenu> = new EventEmitter<SidebarMenu>();
   //#endregion
@@ -74,6 +75,21 @@ export abstract class SidebarService {
     }
 
     const hasUrl: boolean = (menu.url?.length ?? 0) > 0;
+    const openMode: SidebarMenuOpenMode = toSidebarMenuOpenMode(menu.openMode);
+    const isExternal: boolean = hasUrl && openMode !== SidebarMenuOpenMode.Internal;
+
+    // External destinations are announced on their own emitter, so a consumer that only knows
+    // menuUrlSelected never receives an absolute URL it would hand to the Angular router.
+    const urlSelected: EventEmitter<SidebarMenu> = isExternal ? this.menuExternalUrlSelected : this.menuUrlSelected;
+
+    // Opening a new browser tab is an action, not a destination: the user stays on the view
+    // already on screen, so the item must neither take the selection nor clear that view's.
+    // Parents still fall through, so a parent that carries a URL keeps expanding instead of
+    // becoming impossible to open.
+    if (isExternal && openMode === SidebarMenuOpenMode.ExternalNewTab && menu.childCount === 0) {
+      urlSelected.emit(menu);
+      return;
+    }
 
     // In case we're deselecting the menu because a child was selected, we need to keep track of the original selection state.
     const isSelected: boolean = menu.isSelected;
@@ -87,12 +103,12 @@ export abstract class SidebarService {
       this.selectMenu(menu);
 
       if (hasUrl) {
-        this.menuUrlSelected.emit(menu);
+        urlSelected.emit(menu);
       }
 
     } else if (hasUrl) {
       // Menu with a URL is already selected — navigate again instead of toggling off.
-      this.menuUrlSelected.emit(menu);
+      urlSelected.emit(menu);
     } else {
       this.selectedMenu = null;
       this.deselectMenu(menu);

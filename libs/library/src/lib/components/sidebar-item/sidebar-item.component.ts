@@ -2,7 +2,7 @@ import { NgFor, NgIf, NgStyle } from '@angular/common';
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, inject, Input, OnInit, ViewChild } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { delay, filter, takeUntil } from 'rxjs';
-import { SidebarMenu } from '../../models';
+import { SIDEBAR_CONFIGS, SidebarConfigs, SidebarMenu, SidebarMenuOpenMode, toSidebarMenuOpenMode } from '../../models';
 import { SidebarService } from '../../services';
 import { BaseComponent } from '../base.component';
 
@@ -40,6 +40,7 @@ export class SidebarItemComponent extends BaseComponent implements OnInit, After
 
   private _childHeight: number = 0;
   private changeDetectorRef: ChangeDetectorRef = inject(ChangeDetectorRef);
+  private sidebarConfigs: SidebarConfigs = inject(SIDEBAR_CONFIGS);
   private sidebarService: SidebarService = inject(SidebarService);
   //#endregion
 
@@ -52,6 +53,10 @@ export class SidebarItemComponent extends BaseComponent implements OnInit, After
     return this.isParent && (this.menu.children?.length ?? 0) > 0;
   }
 
+  protected get externalLinkText(): string {
+    return this.sidebarConfigs.externalLinkText;
+  }
+
   protected get isActive(): boolean {
     return this.sidebarService.isActive;
   }
@@ -62,6 +67,11 @@ export class SidebarItemComponent extends BaseComponent implements OnInit, After
 
   protected get isParent(): boolean {
     return this.menu.childCount > 0;
+  }
+
+  protected get opensInNewBrowserTab(): boolean {
+    return (this.menu.url?.length ?? 0) > 0
+      && toSidebarMenuOpenMode(this.menu.openMode) === SidebarMenuOpenMode.ExternalNewTab;
   }
 
   protected get hasIcon(): boolean {

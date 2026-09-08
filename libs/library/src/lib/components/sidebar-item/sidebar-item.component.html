@@ -1,11 +1,12 @@
 <li>
     <div #menuContainer
+    [class.external]="opensInNewBrowserTab"
     [class.failed]="hasFailed"
     [class.loading]="isLoading"
     [class.parent]="isParent"
     [class.selected]="isSelected"
     (click)="onSelectItem()">
-        <a>
+        <a [attr.title]="opensInNewBrowserTab ? externalLinkText : null">
             <i *ngIf="hasIcon && level === 0" class="fa-solid fa-fw {{ menu.icon }}"></i>
             <span>{{ menu.label | translate }}</span>
         </a>

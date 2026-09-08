@@ -13,7 +13,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Sidebar menu items can now open an external destination instead of an internal route.**
+  `SidebarMenu` gained an optional `openMode` (`SidebarMenuOpenMode`): `Internal` (the default),
+  `ExternalNewTab`, or `ExternalEmbedded`. Read it through the exported
+  `toSidebarMenuOpenMode(menu.openMode)` helper rather than comparing the field directly — the
+  value is deserialized straight from your menu endpoint, so the helper accepts the mode as a
+  camelCase string, as a case-insensitive variant of it, or as the enum ordinal an ASP.NET Core
+  enum property serializes to. Anything unrecognized — an omitted field from a backend that
+  predates this feature, `null`, or a mode a newer version adds — degrades to `Internal`, so a
+  menu you have not touched behaves exactly as it does today.
+
+- **`SidebarService.menuExternalUrlSelected`** — a separate output carrying the items whose mode
+  is not `Internal`. They are deliberately **not** announced on `menuUrlSelected`, which keeps its
+  existing contract: the URL it carries is always an Angular route. Acting on external items needs
+  `@zambon-dev/shared` (which opens the browser tab or the embedded view), or your own subscription
+  to the new output. Until then an external item highlights and does nothing, rather than sending
+  `https://…` to the router.
+
+- **`SidebarConfigs.externalLinkText`** — the tooltip on items that open in a new browser tab.
+  Defaults to `Opens in a new browser tab` and, like `errorText` and `loadingText`, is rendered
+  as-is rather than through the translate pipe, so pass an already-localized string.
+
 ### Changed
+
+- **Selection now follows the open mode.** An item that opens in a new browser tab is treated as an
+  action rather than a destination: it takes no selection pill and, importantly, does not clear the
+  selection of the view the user is still looking at. Items that open embedded become real
+  application tabs and keep today’s selection behaviour exactly. A parent that also carries a URL
+  still expands, so it cannot become impossible to open.
+
+- **Items that open in a new browser tab show a trailing outbound glyph.** It sits in the same
+  absolutely-positioned slot as the parent chevron, so a long label still ellipsises inside the
+  anchor and the collapsed rail is unchanged, and it fades in with the sidebar like the other
+  affordances. Embedded items get no glyph — they stay inside the application. Items with no
+  `openMode`, or with `openMode: Internal`, render exactly as before.
 
 ### Deprecated
 
@@ -22,6 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### ⚠ Breaking Changes / Migration
+
+None. `openMode` is optional, so a backend that does not send it produces today’s behaviour, and
+`menuUrlSelected` is unchanged for internal items. If you subscribe to `menuUrlSelected` yourself
+and want external items too, add a subscription to `menuExternalUrlSelected`.
 
 ## [1.3.2] - 2026-07-30
 

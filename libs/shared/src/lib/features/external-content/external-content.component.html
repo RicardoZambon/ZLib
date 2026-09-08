@@ -1,3 +1,23 @@
+<!-- Published to DefaultTabViewComponent through TabViewService, so the actions sit in the
+     application's ribbon like every other screen's. -->
+<ng-template #ribbon>
+    <lib-ribbon-group [label]="'RibbonGroup-Page' | translate">
+        <framework-button
+        icon="fa-rotate-right"
+        label="ExternalContent-Reload"
+        [disabled]="!frameUrl"
+        (action)="onReload()">
+        </framework-button>
+
+        <framework-button
+        icon="fa-arrow-up-right-from-square"
+        label="ExternalContent-OpenInNewTab"
+        [disabled]="!resolvedUrl"
+        (action)="onOpenInNewTab()">
+        </framework-button>
+    </lib-ribbon-group>
+</ng-template>
+
 @if (isUnavailable) {
     <div class="external-content-message">
         <i class="fa-solid fa-link-slash"></i>
@@ -11,28 +31,31 @@
         <span>{{ 'ExternalContent-Blocked-Message' | translate }}</span>
     </div>
 } @else {
-    <div class="external-content-toolbar">
-        <button class="btn gray-300" type="button" (click)="onReload()">
-            <i class="fa-solid fa-rotate-right"></i>
-            <span>{{ 'ExternalContent-Reload' | translate }}</span>
-        </button>
-
-        <button class="btn gray-300" type="button" (click)="onOpenInNewTab()">
-            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-            <span>{{ 'ExternalContent-OpenInNewTab' | translate }}</span>
-        </button>
-    </div>
-
     @if (isSlow) {
         <div class="external-content-hint">{{ 'ExternalContent-SlowHint' | translate }}</div>
     }
 
     @if (frameUrl) {
+        <!--
+            sandbox and referrerpolicy are STATIC attributes on purpose. Angular rejects `sandbox`
+            as a binding on an <iframe> outright (NG0910) — it may only be a static attribute — and
+            the whole element then fails to render.
+
+            The token list is fixed for every destination, and deliberately not configurable per
+            menu item:
+            - allow-same-origin keeps the frame in the destination's own origin so its cookies and
+              storage work; without it an SSO'd report will not render. It grants no access to ours,
+              provided the destination is cross-origin -- never point an embedded item at this
+              application's own origin, use an internal route for that.
+            - allow-top-navigation is absent on purpose: a framed site must not be able to navigate
+              the whole application away.
+            - allow-popups-to-escape-sandbox keeps print and download popups usable.
+        -->
         <iframe class="external-content-frame"
-        [src]="frameUrl"
-        [attr.sandbox]="sandbox"
-        [attr.title]="label"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
         referrerpolicy="strict-origin-when-cross-origin"
+        [src]="frameUrl"
+        [attr.title]="label | translate"
         (load)="onFrameLoad()">
         </iframe>
     }

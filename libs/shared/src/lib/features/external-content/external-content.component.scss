@@ -5,10 +5,6 @@
     min-height: 0;
 }
 
-.external-content-toolbar {
-    @apply flex flex-row gap-2 flex-none;
-}
-
 .external-content-hint {
     @apply flex-none rounded px-3 py-2 text-sm;
     @apply bg-amber-100 text-amber-900;

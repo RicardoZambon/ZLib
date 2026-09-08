@@ -47,11 +47,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ```
 
   Register them even if you only plan to use `ExternalNewTab`: an embedded item configured without
-  them opens a tab that immediately bounces to the home route. The view always offers **Open in a
-  new browser tab** and **Reload**, because many sites refuse to be embedded (`X-Frame-Options`,
-  CSP `frame-ancestors`) and a browser gives JavaScript no reliable way to detect that — if nothing
-  has loaded after a few seconds the view also shows a hint saying so. An `https` application
-  cannot embed an `http` destination at all; the same button is the way out.
+  them opens a tab that immediately bounces to the home route.
+
+  The view is an ordinary `TabViewBase` hosted by `DefaultTabViewComponent`, so its actions appear
+  in the application ribbon (a **Page** group with **Reload** and **Open in a new browser tab**)
+  and look like every other screen’s — the shipped `externalContentRoutes` already wires that host
+  up, which is the other reason not to hand-write the routes.
+
+  **Open in a new browser tab** is always available, because many sites refuse to be embedded
+  (`X-Frame-Options`, CSP `frame-ancestors`) and a browser gives JavaScript no reliable way to
+  detect that — if nothing has loaded after a few seconds the view also shows a hint saying so. An
+  `https` application cannot embed an `http` destination at all; the same button is the way out.
 
   The tab URL is `/external-content/<menu id>` and never carries the destination, so no one can
   hand-craft a link that makes your application frame an arbitrary site. Pressing F5 on an embedded

@@ -1,9 +1,10 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { TabService } from '@zambon-dev/framework';
+import { ButtonComponent, TabService, TabViewBase } from '@zambon-dev/framework';
+import { RibbonGroupComponent } from '@zambon-dev/library';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Subject, take, takeUntil } from 'rxjs';
+import { take, takeUntil } from 'rxjs';
 import { EXTERNAL_CONTENT_CONFIGS, ExternalContentConfigs, IExternalContentEntry } from '../../models';
 import { ExternalContentService, ExternalUrlResolverService } from '../../services';
 
@@ -12,45 +13,37 @@ import { ExternalContentService, ExternalUrlResolverService } from '../../servic
  *
  * Routed as `/external-content/:menuID` — the destination itself never travels in the URL, so no
  * one can hand-craft a link that makes the application frame an arbitrary site.
+ *
+ * A `TabViewBase` like any other screen, so its actions live in the ribbon rather than in a
+ * bar of its own: it must be routed under `DefaultTabViewComponent`, which is what renders the
+ * `#ribbon` template this view publishes. Use the exported `externalContentRoutes`.
  */
 @Component({
   selector: 'shared-external-content',
   templateUrl: './external-content.component.html',
   styleUrls: ['./external-content.component.scss'],
   imports: [
+    ButtonComponent,
+    RibbonGroupComponent,
     TranslatePipe,
   ]
 })
-export class ExternalContentComponent implements OnInit, OnDestroy {
+export class ExternalContentComponent extends TabViewBase implements OnInit {
   //#region ViewChilds, Inputs, Outputs
   //#endregion
 
   //#region Variables
-  /**
-   * Fixed for every destination, and deliberately not configurable per menu item.
-   *
-   * - `allow-same-origin` keeps the frame in the *destination's* own origin so its cookies and
-   *   storage work; without it an SSO'd report will not render. It grants no access to ours,
-   *   provided the destination is cross-origin — never point an embedded item at this
-   *   application's own origin, use an internal route for that.
-   * - `allow-top-navigation` is absent on purpose: a framed site must not be able to navigate the
-   *   whole application away.
-   * - `allow-popups-to-escape-sandbox` keeps print and download popups usable.
-   */
-  protected readonly sandbox: string = 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads';
-
   protected frameUrl?: SafeResourceUrl;
   protected isBlocked: boolean = false;
   protected isSlow: boolean = false;
   protected isUnavailable: boolean = false;
   protected label: string = '';
+  protected resolvedUrl: string = '';
 
   private activatedRoute: ActivatedRoute = inject(ActivatedRoute);
   private configs: ExternalContentConfigs = inject(EXTERNAL_CONTENT_CONFIGS);
-  private destroy$: Subject<boolean> = new Subject<boolean>();
   private externalContentService: ExternalContentService = inject(ExternalContentService);
   private externalUrlResolverService: ExternalUrlResolverService = inject(ExternalUrlResolverService);
-  private resolvedUrl: string = '';
   private sanitizer: DomSanitizer = inject(DomSanitizer);
   private slowHintTimeout?: ReturnType<typeof setTimeout>;
   private tabService: TabService = inject(TabService);
@@ -60,11 +53,14 @@ export class ExternalContentComponent implements OnInit, OnDestroy {
   //#endregion
 
   //#region Constructor and Angular life cycle methods
-  public ngOnDestroy(): void {
+  constructor() {
+    super();
+  }
+
+  public override ngOnDestroy(): void {
     this.clearSlowHint();
 
-    this.destroy$.next(true);
-    this.destroy$.complete();
+    super.ngOnDestroy();
   }
 
   public ngOnInit(): void {
@@ -72,6 +68,8 @@ export class ExternalContentComponent implements OnInit, OnDestroy {
 
     if (!menuID) {
       this.isUnavailable = true;
+      this.loading = false;
+
       return;
     }
 
@@ -131,8 +129,13 @@ export class ExternalContentComponent implements OnInit, OnDestroy {
   }
 
   private show(entry: IExternalContentEntry | undefined): void {
+    // TabViewBase starts every screen loading so its ribbon buttons begin disabled; every exit
+    // from here has to clear it or they never become usable.
+    this.loading = false;
+
     if (!entry || !entry.url) {
       this.isUnavailable = true;
+
       return;
     }
 
@@ -150,6 +153,7 @@ export class ExternalContentComponent implements OnInit, OnDestroy {
     if (!this.externalUrlResolverService.isAllowed(url) || !this.isOriginAllowed(url)) {
       console.error(`Embedded menu item "${entry.label}" points to an address that is not allowed and was not displayed.`, url);
       this.isBlocked = true;
+
       return;
     }
 
@@ -169,7 +173,7 @@ export class ExternalContentComponent implements OnInit, OnDestroy {
     // Not detection, and it must never be turned into one: whether a site refuses to be framed
     // (X-Frame-Options, CSP frame-ancestors) is not observable from JavaScript. A refused frame
     // usually fires `load` immediately and renders the browser's own error page, in which case
-    // this hint never appears -- the toolbar's "open in a new browser tab" button is the actual
+    // this hint never appears -- the ribbon's "open in a new browser tab" button is the actual
     // way out, and it is always present.
     this.slowHintTimeout = setTimeout(() => this.isSlow = true, this.configs.slowFrameHintDelay);
   }

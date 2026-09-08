@@ -812,6 +812,46 @@ describe('CatalogSelectComponent', () => {
   //#endregion
 
   //#region Search with local entries
+  describe('display after a form reset', () => {
+    // FormService.resetForm clears every control and then patches the model back. When the
+    // stored value equals the control's initial value the value never changes, so the display
+    // has to be restored on its own account; otherwise the field renders empty.
+    function resetAndPatch(value: any): void {
+      form.reset();
+      form.patchValue({ testControl: value });
+    }
+
+    it('should restore the display when the value equals the initial value', () => {
+      setupComponent();
+
+      // The control has to carry the value as its initial one, so that the reset puts the very
+      // same value back and the component sees no change. Rebuilt after setupComponent because
+      // that helper installs a form of its own.
+      form = new FormGroup({
+        testControl: new FormControl(0, { nonNullable: true }),
+        testDisplayControl: new FormControl(''),
+      });
+      (component as any).formGroup = { form };
+      component._entriesList = [{ display: 'None', value: 0 }, ...sampleEntries];
+      initComponent();
+      expect(form.get('testDisplayControl')?.value).toBe('None');
+
+      resetAndPatch(0);
+
+      expect(form.get('testDisplayControl')?.value).toBe('None');
+    });
+
+    it('should restore the display when the value differs from the initial value', () => {
+      setupComponent();
+      component._entriesList = sampleEntries;
+      initComponent();
+
+      resetAndPatch(2);
+
+      expect(form.get('testDisplayControl')?.value).toBe('Entry 2');
+    });
+  });
+
   describe('search with local entries', () => {
     it('should filter local entries by display text', () => {
       setupComponent();

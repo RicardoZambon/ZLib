@@ -231,7 +231,7 @@ export class CatalogSelectComponent extends BaseComponent implements OnInit, Aft
       .subscribe((value: any) => {
         this.syncFormControlsEnabledDisabled();
 
-        if (this.selectedValue === value) {
+        if (!this.shouldRefreshDisplay(value)) {
           return;
         }
 
@@ -241,8 +241,7 @@ export class CatalogSelectComponent extends BaseComponent implements OnInit, Aft
             this.displayControl?.reset(null, { emitEvent: false });
           }
         } else {
-          const display: string = this.entriesDataSource.filter((entry: ICatalogEntry) => entry.value === value)[0]?.display ?? '';
-          this.displayControl?.setValue(display, { emitEvent: false });
+          this.displayControl?.setValue(this.resolveDisplay(value), { emitEvent: false });
         }
       });
 
@@ -580,17 +579,41 @@ export class CatalogSelectComponent extends BaseComponent implements OnInit, Aft
     this.showMinimumCharactersMessage = false;
   }
 
+  private resolveDisplay(value: any): string {
+    return this.entriesDataSource.filter((entry: ICatalogEntry) => entry.value === value)[0]?.display ?? '';
+  }
+
   private syncDisplayFromCurrentValue(): void {
     const currentValue: any = this.formControl?.value;
-    if (currentValue == null || this.selectedValue === currentValue) {
+    if (currentValue == null || !this.shouldRefreshDisplay(currentValue)) {
       return;
     }
 
     this.selectedValue = currentValue;
     if (!this.hasSearchEndpoint) {
-      const display: string = this.entriesDataSource.filter((entry: ICatalogEntry) => entry.value === currentValue)[0]?.display ?? '';
-      this.displayControl?.setValue(display, { emitEvent: false });
+      this.displayControl?.setValue(this.resolveDisplay(currentValue), { emitEvent: false });
     }
+  }
+
+  /**
+   * Decides whether the display control has to be written again.
+   *
+   * The value on its own is not enough. Resetting a form clears the display control and then
+   * patches the same value back, so an unchanged value can still leave the display empty. That
+   * only happens when the stored value equals the control's initial value, which is why it used
+   * to show up on the default entry alone.
+   */
+  private shouldRefreshDisplay(value: any): boolean {
+    if (this.selectedValue !== value) {
+      return true;
+    }
+
+    if (this.hasSearchEndpoint) {
+      return false;
+    }
+
+    const display: string = this.resolveDisplay(value);
+    return display.length > 0 && this.displayControl?.value !== display;
   }
 
   private syncFormControlsEnabledDisabled(): void {

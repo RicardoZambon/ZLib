@@ -1,5 +1,6 @@
 export * from './lib/auth';
 export * from './lib/components';
+export { ExternalContentComponent, externalContentRoutes } from './lib/features/external-content';
 export { OperationsHistoryChildListComponent, OperationsHistoryModalComponent } from './lib/features/operations-history';
 export { ServicesHistoryChildListComponent, ServicesHistoryViewComponent } from './lib/features/services-history';
 export * from './lib/i18n';

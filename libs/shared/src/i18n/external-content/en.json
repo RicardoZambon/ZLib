@@ -1,0 +1,10 @@
+{
+  "ExternalContent-Blocked-Title": "Cannot be displayed",
+  "ExternalContent-Blocked-Message": "This menu item points to an address that is not allowed. Ask an administrator to review it.",
+  "ExternalContent-OpenInNewTab": "Open in a new browser tab",
+  "ExternalContent-SlowHint": "Still loading. Some sites do not allow being displayed inside another application — try opening it in a new browser tab.",
+  "ExternalContent-Unavailable-Title": "Content unavailable",
+  "ExternalContent-Unavailable-Message": "Reopen this item from the menu to load it.",
+
+  "": ""
+}

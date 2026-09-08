@@ -1,0 +1,57 @@
+// The routed element is a flex item of .tab-content, which is absolutely positioned and clips its
+// overflow, so the host has to flex and allow itself to shrink or the frame collapses to nothing.
+:host {
+    @apply flex flex-col flex-grow overflow-hidden gap-2;
+    min-height: 0;
+}
+
+// Every panel below wears the same surface as lib-data-grid — `border rounded-lg bg-white
+// border-gray-300/90`. This screen occupies the slot a grid would, so matching it is what makes an
+// embedded report read as one of the application's own views instead of a hole in the layout.
+@mixin panel {
+    @apply border rounded-lg bg-white border-gray-300/90;
+}
+
+.external-content-hint {
+    @apply flex-none rounded-lg border px-3 py-2 text-sm;
+    @apply bg-amber-100 text-amber-900 border-amber-300;
+}
+
+// The border and the rounding live on the container, not on the iframe: a border-radius set on an
+// iframe is not reliably honoured for the framed document's own content, so the corners would show
+// square through the curve. The container clips instead.
+.external-content-frame-container {
+    @include panel;
+    @apply relative flex flex-grow overflow-hidden;
+    min-height: 0;
+}
+
+// Covers the frame while it loads. Opaque on purpose: a reload has to visibly clear the content,
+// otherwise the previous render stays on screen and nothing tells the user anything happened.
+// Same spinner and sizing as lib-data-grid's own loading row.
+.external-content-loading {
+    @apply absolute inset-0 z-10 flex items-center justify-center gap-2;
+    @apply bg-white text-gray-500;
+
+    svg {
+        @apply h-6 w-6 min-w-6 min-h-6 animate-spin;
+    }
+}
+
+.external-content-frame {
+    @apply flex-grow w-full border-0;
+    min-height: 0;
+}
+
+.external-content-message {
+    @include panel;
+    @apply flex flex-col flex-grow items-center justify-center gap-2 p-6 text-center;
+
+    i {
+        @apply text-4xl opacity-40;
+    }
+
+    .external-content-message-title {
+        @apply font-semibold text-lg;
+    }
+}

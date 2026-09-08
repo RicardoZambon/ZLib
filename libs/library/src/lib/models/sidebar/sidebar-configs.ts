@@ -8,6 +8,8 @@ export const SIDEBAR_CONFIGS: InjectionToken<SidebarConfigs> = new InjectionToke
 
 export class SidebarConfigs {
   public errorText: string = 'Error';
+  /** Tooltip for items that open in a new browser tab. Rendered as-is, like {@link errorText}. */
+  public externalLinkText: string = 'Opens in a new browser tab';
   public loadingText: string = 'Loading';
   public logoCollapsedPath?: string;
   public logoExpandedPath?: string;

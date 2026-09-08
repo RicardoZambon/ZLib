@@ -46,10 +46,12 @@ import {
   MultiEditorDataset,
   RibbonGroupComponent,
   SidebarMenu,
+  SidebarMenuOpenMode,
   SidebarService,
 } from '@zambon-dev/library';
 import { BehaviorSubject, defer, delay, map, Observable, of } from 'rxjs';
 import { FiltersBase } from '../../components';
+import { externalContentRoutes } from '../../features/external-content';
 import { ServicesHistoryViewComponent } from '../../features/services-history/services-history-view/services-history-view.component';
 import { MainLayoutComponent } from '../../layouts/main-layout/main-layout.component';
 import { INotification, IOperationsHistoryList, IServicesHistoryList } from '../../models';
@@ -302,10 +304,52 @@ const UNITS: IUnitsList[] = [
 const MENU_DASHBOARD = 1;
 const MENU_GENERAL = 2;
 const MENU_SECURITY = 3;
+const MENU_REPORT_NEW_TAB = 4;
+const MENU_REPORT_EMBEDDED = 5;
+
+// IANA-reserved for documentation, and it sends no X-Frame-Options, so the embedded story really
+// renders instead of showing a browser error page. Point it at a destination that refuses framing
+// and the component falls back to its "open in a new browser tab" button -- which is the honest
+// behaviour, because JavaScript cannot detect the refusal.
+const SHOWCASE_REPORT_URL = 'https://example.com/';
+
+// Both destinations carry placeholders, so the story also exercises ExternalUrlResolverService
+// substituting the signed-in user and the active language before the URL is opened. Switch the
+// language in the top bar and reopen the item to see {language} change.
+function externalMenus(): SidebarMenu[] {
+  return [
+    new SidebarMenu({
+      icon: 'fa-file-invoice',
+      id: MENU_REPORT_NEW_TAB,
+      label: 'Showcase-Menus-Reports-NewTab',
+      openMode: SidebarMenuOpenMode.ExternalNewTab,
+      region: 'Showcase-Region-Reports',
+      url: `${SHOWCASE_REPORT_URL}?report=monthly&user={userId}&lang={language}`,
+    }),
+    new SidebarMenu({
+      icon: 'fa-file-lines',
+      id: MENU_REPORT_EMBEDDED,
+      label: 'Showcase-Menus-Reports-Embedded',
+      openMode: SidebarMenuOpenMode.ExternalEmbedded,
+      region: 'Showcase-Region-Reports',
+      url: `${SHOWCASE_REPORT_URL}?report=quarterly&user={userName}&lang={language}`,
+    }),
+  ];
+}
 
 @Injectable()
 class ShowcaseSidebarService extends SidebarService {
   public getMenuFromUrl(url: string): Observable<SidebarMenu> {
+    // An embedded tab opened from a cold deep link resolves its destination through here, so
+    // answer with the real menu. Falling through would hand the view a menu whose url is the
+    // /external-content route itself, which is not an http address and would read as blocked.
+    const external: SidebarMenu | undefined = externalMenus()
+      .find((menu: SidebarMenu) => url === `/external-content/${menu.id}`);
+
+    if (!!external) {
+      return of(external);
+    }
+
     return of(new SidebarMenu({ id: MENU_DASHBOARD, label: 'Showcase-Menus-Dashboard', icon: 'fa-chart-line', url }));
   }
 
@@ -334,6 +378,7 @@ class ShowcaseSidebarService extends SidebarService {
       new SidebarMenu({ id: MENU_DASHBOARD, label: 'Showcase-Menus-Dashboard', icon: 'fa-chart-line', url: '/dashboard', region: 'Showcase-Region-Main' }),
       new SidebarMenu({ id: MENU_GENERAL, label: 'Showcase-Menus-General', icon: 'fa-layer-group', childCount: 2, region: 'Showcase-Region-Main' }),
       new SidebarMenu({ id: MENU_SECURITY, label: 'Showcase-Menus-Security', icon: 'fa-shield-halved', childCount: 1, region: 'Showcase-Region-Administration' }),
+      ...externalMenus(),
     ]).pipe(delay(SHOWCASE_READ_LATENCY_MS));
   }
 }
@@ -1213,8 +1258,13 @@ const notificationsServiceMock: Pick<NotificationsService,
 const authenticationServiceMock: Pick<AuthenticationService, 'getUserInfo' | 'isAuthenticated' | 'signOut'> = {
   getUserInfo: () => ({
     costCenterName: 'IT',
+    // email, userID and username are what the external menu URLs substitute for {email},
+    // {userId} and {userName}; without them those placeholders would resolve to empty strings.
+    email: 'ada@example.com',
     name: 'Ada Lovelace',
     position: 'System Administrator',
+    userID: 42,
+    username: 'ada',
   }),
   isAuthenticated: true,
   signOut: () => undefined,
@@ -1262,6 +1312,9 @@ const showcaseRoutes: Routes = [
     component: MainLayoutComponent,
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      // Required for the embedded menu item: without it the tab opens and TabsComponent,
+      // finding no framework view type, sends the user back to the home route.
+      ...externalContentRoutes,
       {
         path: 'dashboard',
         component: DefaultTabViewComponent,

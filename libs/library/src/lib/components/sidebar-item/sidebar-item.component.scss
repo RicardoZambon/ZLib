@@ -5,6 +5,16 @@
         > div {
             margin-inline: 0.5rem;
 
+            &.external {
+                &:after {
+                    @apply opacity-100;
+                }
+
+                a {
+                    @apply pr-8;
+                }
+            }
+
             &.parent {
                 &:not(.loading):after {
                     @apply opacity-100;
@@ -82,6 +92,21 @@ li {
         &.selected {
             background-color: var(--sidebar-item-selected-bg);
             color: var(--sidebar-item-selected-text);
+        }
+
+        // Items that leave the application get a trailing glyph in the same absolute slot as
+        // the parent chevron: an inline icon after the label would be clipped by the anchor's
+        // ellipsis, and would crowd the leading icon in the collapsed rail. An external leaf is
+        // never .parent, so the two never share the slot. Embedded items get no glyph -- they
+        // stay inside the application.
+        &.external:after {
+            @apply absolute font-extrabold w-[10px] top-0 right-3 text-xs;
+            @apply transition-[opacity] ease-in-out;
+            @apply opacity-0;
+            @apply content-['\f08e'];
+            font-family: "Font Awesome 6 Free";
+            transition-duration: var(--sidebar-animation-duration);
+            will-change: opacity;
         }
 
         &.parent:after {

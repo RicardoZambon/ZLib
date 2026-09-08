@@ -1,0 +1,83 @@
+<!-- Published to DefaultTabViewComponent through TabViewService, so the actions sit in the
+     application's ribbon like every other screen's. -->
+<ng-template #ribbon>
+    <lib-ribbon-group [label]="'RibbonGroup-Page' | translate">
+        <!-- Same icon and label as framework-button-refresh, so reloading a report reads as the
+             same action as refreshing a grid. `loading` is what spins it while the frame loads. -->
+        <framework-button
+        icon="fa-sync-alt"
+        label="Button-Refresh"
+        [disabled]="!resolvedUrl"
+        [loading]="isFrameLoading"
+        (action)="onReload()">
+        </framework-button>
+
+        <framework-button
+        icon="fa-arrow-up-right-from-square"
+        label="ExternalContent-OpenInNewTab"
+        [disabled]="!resolvedUrl"
+        (action)="onOpenInNewTab()">
+        </framework-button>
+    </lib-ribbon-group>
+</ng-template>
+
+@if (isUnavailable) {
+    <div class="external-content-message">
+        <i class="fa-solid fa-link-slash"></i>
+        <span class="external-content-message-title">{{ 'ExternalContent-Unavailable-Title' | translate }}</span>
+        <span>{{ 'ExternalContent-Unavailable-Message' | translate }}</span>
+    </div>
+} @else if (isBlocked) {
+    <div class="external-content-message">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span class="external-content-message-title">{{ 'ExternalContent-Blocked-Title' | translate }}</span>
+        <span>{{ 'ExternalContent-Blocked-Message' | translate }}</span>
+    </div>
+} @else {
+    @if (isSlow) {
+        <div class="external-content-hint">{{ 'ExternalContent-SlowHint' | translate }}</div>
+    }
+
+    @if (frameUrl || isFrameLoading) {
+        <!--
+            The container stays mounted across a reload, which briefly clears frameUrl, so the panel
+            does not flicker out and back. What goes away is the frame itself, on purpose.
+
+            sandbox and referrerpolicy are STATIC attributes on purpose. Angular rejects `sandbox`
+            as a binding on an <iframe> outright (NG0910) — it may only be a static attribute — and
+            the whole element then fails to render.
+
+            The token list is fixed for every destination, and deliberately not configurable per
+            menu item:
+            - allow-same-origin keeps the frame in the destination's own origin so its cookies and
+              storage work; without it an SSO'd report will not render. It grants no access to ours,
+              provided the destination is cross-origin -- never point an embedded item at this
+              application's own origin, use an internal route for that.
+            - allow-top-navigation is absent on purpose: a framed site must not be able to navigate
+              the whole application away.
+            - allow-popups-to-escape-sandbox keeps print and download popups usable.
+        -->
+        <div class="external-content-frame-container">
+            @if (isFrameLoading) {
+                <div class="external-content-loading">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+
+                    <span>{{ 'Loading' | translate }}</span>
+                </div>
+            }
+
+            @if (frameUrl) {
+                <iframe class="external-content-frame"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
+                referrerpolicy="strict-origin-when-cross-origin"
+                [src]="frameUrl"
+                [attr.title]="label | translate"
+                (load)="onFrameLoad()">
+                </iframe>
+            }
+        </div>
+    }
+}

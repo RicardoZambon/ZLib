@@ -51,12 +51,14 @@
               the whole application away.
             - allow-popups-to-escape-sandbox keeps print and download popups usable.
         -->
-        <iframe class="external-content-frame"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
-        referrerpolicy="strict-origin-when-cross-origin"
-        [src]="frameUrl"
-        [attr.title]="label | translate"
-        (load)="onFrameLoad()">
-        </iframe>
+        <div class="external-content-frame-container">
+            <iframe class="external-content-frame"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
+            referrerpolicy="strict-origin-when-cross-origin"
+            [src]="frameUrl"
+            [attr.title]="label | translate"
+            (load)="onFrameLoad()">
+            </iframe>
+        </div>
     }
 }

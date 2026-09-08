@@ -5,9 +5,25 @@
     min-height: 0;
 }
 
+// Every panel below wears the same surface as lib-data-grid — `border rounded-lg bg-white
+// border-gray-300/90`. This screen occupies the slot a grid would, so matching it is what makes an
+// embedded report read as one of the application's own views instead of a hole in the layout.
+@mixin panel {
+    @apply border rounded-lg bg-white border-gray-300/90;
+}
+
 .external-content-hint {
-    @apply flex-none rounded px-3 py-2 text-sm;
-    @apply bg-amber-100 text-amber-900;
+    @apply flex-none rounded-lg border px-3 py-2 text-sm;
+    @apply bg-amber-100 text-amber-900 border-amber-300;
+}
+
+// The border and the rounding live on the container, not on the iframe: a border-radius set on an
+// iframe is not reliably honoured for the framed document's own content, so the corners would show
+// square through the curve. The container clips instead.
+.external-content-frame-container {
+    @include panel;
+    @apply flex flex-grow overflow-hidden;
+    min-height: 0;
 }
 
 .external-content-frame {
@@ -16,7 +32,8 @@
 }
 
 .external-content-message {
-    @apply flex flex-col flex-grow items-center justify-center gap-2 text-center;
+    @include panel;
+    @apply flex flex-col flex-grow items-center justify-center gap-2 p-6 text-center;
 
     i {
         @apply text-4xl opacity-40;

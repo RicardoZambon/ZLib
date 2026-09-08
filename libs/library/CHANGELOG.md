@@ -13,6 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### ⚠ Breaking Changes / Migration
+
+## [1.4.0] - 2026-09-08
+
+### Added
+
 - **Sidebar menu items can now open an external destination instead of an internal route.**
   `SidebarMenu` gained an optional `openMode` (`SidebarMenuOpenMode`): `Internal` (the default),
   `ExternalNewTab`, or `ExternalEmbedded`. Read it through the exported
@@ -47,12 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   anchor and the collapsed rail is unchanged, and it fades in with the sidebar like the other
   affordances. Embedded items get no glyph — they stay inside the application. Items with no
   `openMode`, or with `openMode: Internal`, render exactly as before.
-
-### Deprecated
-
-### Removed
-
-### Fixed
 
 ### ⚠ Breaking Changes / Migration
 
@@ -192,7 +200,8 @@ config options and the `getUserProfile()` method still exist but are no longer c
   available via [GitHub Releases](https://github.com/RicardoZambon/ZLibraries/releases) and the
   `library-v*` tags.
 
-[Unreleased]: https://github.com/RicardoZambon/ZLibraries/compare/library-v1.3.2...HEAD
+[Unreleased]: https://github.com/RicardoZambon/ZLibraries/compare/library-v1.4.0...HEAD
+[1.4.0]: https://github.com/RicardoZambon/ZLibraries/releases/tag/library-v1.4.0
 [1.3.2]: https://github.com/RicardoZambon/ZLibraries/releases/tag/library-v1.3.2
 [1.3.1]: https://github.com/RicardoZambon/ZLibraries/releases/tag/library-v1.3.1
 [1.2.0]: https://github.com/RicardoZambon/ZLibraries/releases/tag/library-v1.2.0

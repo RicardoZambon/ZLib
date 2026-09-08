@@ -13,6 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### ⚠ Breaking Changes / Migration
+
+## [2.1.0] - 2026-09-08
+
+### Added
+
 - **External sidebar destinations are now opened, in either of two modes.** `MainLayoutComponent`
   subscribes to `@zambon-dev/library`’s new `SidebarService.menuExternalUrlSelected`: an item whose
   `openMode` is `ExternalNewTab` opens in a new browser tab (`noopener,noreferrer`), and one marked
@@ -90,12 +104,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Translations** for the embedded view under `i18n/external-content/`, already included in
   `ZAMBON_SHARED_I18N_RESOURCES`.
-
-### Changed
-
-### Deprecated
-
-### Removed
 
 ### Fixed
 
@@ -292,7 +300,8 @@ URL) in `AppConfig`, and implement a hub that pushes the notification list to cl
   available via [GitHub Releases](https://github.com/RicardoZambon/ZLibraries/releases) and the
   `shared-v*` tags.
 
-[Unreleased]: https://github.com/RicardoZambon/ZLibraries/compare/shared-v2.0.0...HEAD
+[Unreleased]: https://github.com/RicardoZambon/ZLibraries/compare/shared-v2.1.0...HEAD
+[2.1.0]: https://github.com/RicardoZambon/ZLibraries/releases/tag/shared-v2.1.0
 [2.0.0]: https://github.com/RicardoZambon/ZLibraries/releases/tag/shared-v2.0.0
 [1.2.0]: https://github.com/RicardoZambon/ZLibraries/releases/tag/shared-v1.2.0
 [1.1.0]: https://github.com/RicardoZambon/ZLibraries/releases/tag/shared-v1.1.0

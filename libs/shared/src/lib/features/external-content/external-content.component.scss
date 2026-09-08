@@ -1,0 +1,32 @@
+// The routed element is a flex item of .tab-content, which is absolutely positioned and clips its
+// overflow, so the host has to flex and allow itself to shrink or the frame collapses to nothing.
+:host {
+    @apply flex flex-col flex-grow overflow-hidden gap-2;
+    min-height: 0;
+}
+
+.external-content-toolbar {
+    @apply flex flex-row gap-2 flex-none;
+}
+
+.external-content-hint {
+    @apply flex-none rounded px-3 py-2 text-sm;
+    @apply bg-amber-100 text-amber-900;
+}
+
+.external-content-frame {
+    @apply flex-grow w-full border-0;
+    min-height: 0;
+}
+
+.external-content-message {
+    @apply flex flex-col flex-grow items-center justify-center gap-2 text-center;
+
+    i {
+        @apply text-4xl opacity-40;
+    }
+
+    .external-content-message-title {
+        @apply font-semibold text-lg;
+    }
+}

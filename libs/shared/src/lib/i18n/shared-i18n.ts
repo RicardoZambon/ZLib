@@ -18,6 +18,7 @@ export const ZAMBON_SHARED_I18N_ASSET: AngularAssetPattern = {
 };
 
 export const ZAMBON_SHARED_I18N_RESOURCES: TranslationResource[] = [
+  { prefix: `/${ZAMBON_SHARED_I18N_ASSET_PATH}/external-content/`, suffix: '.json' },
   { prefix: `/${ZAMBON_SHARED_I18N_ASSET_PATH}/language-selector/`, suffix: '.json' },
   { prefix: `/${ZAMBON_SHARED_I18N_ASSET_PATH}/login/`, suffix: '.json' },
   { prefix: `/${ZAMBON_SHARED_I18N_ASSET_PATH}/operations-history/`, suffix: '.json' },

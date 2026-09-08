@@ -13,6 +13,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **External sidebar destinations are now opened, in either of two modes.** `MainLayoutComponent`
+  subscribes to `@zambon-dev/library`’s new `SidebarService.menuExternalUrlSelected`: an item whose
+  `openMode` is `ExternalNewTab` opens in a new browser tab (`noopener,noreferrer`), and one marked
+  `ExternalEmbedded` opens an application tab that displays the destination in a sandboxed iframe,
+  keeping the user inside the application. Internal routes are untouched.
+
+- **`ExternalUrlResolverService`** — substitutes the runtime placeholders in an external menu URL
+  and vets the result. The placeholder set is closed and case-sensitive: `{email}`, `{language}`,
+  `{userId}`, `{userName}`. Every substituted value is `encodeURIComponent`-ed, so a name containing
+  `&` cannot inject a query parameter — which also means one placeholder must occupy one whole path
+  segment or query-parameter value. A supported placeholder with no value becomes an empty string
+  (with a console warning); an unrecognized `{…}` is left exactly as configured, so a report URL
+  that legitimately contains braces, such as `?filter={"a":1}`, is not corrupted.
+
+  No authentication token is ever substituted, and the set is closed by construction rather than
+  reflected off the stored user info — `AuthenticationService` persists the whole sign-in response
+  under `userInfo`, tokens included, so a reflective implementation would let a URL configured as
+  `?t={token}` hand the JWT to a third party.
+
+  `{language}` and `{userName}` work today. `{userId}` and `{email}` resolve to an empty string
+  until your `Authentication/SignIn` and `Authentication/RefreshToken` responses include `userID`
+  and `email` (see `ICurrentUserInfo` below).
+
+- **`ExternalContentComponent` + `externalContentRoutes`** — the embedded view. Spread the routes
+  into `MainLayoutComponent`’s children:
+
+  ```ts
+  { path: '', component: MainLayoutComponent, canActivate: [AuthGuard], children: [
+    ...externalContentRoutes,
+    // your own features
+  ] }
+  ```
+
+  Register them even if you only plan to use `ExternalNewTab`: an embedded item configured without
+  them opens a tab that immediately bounces to the home route. The view always offers **Open in a
+  new browser tab** and **Reload**, because many sites refuse to be embedded (`X-Frame-Options`,
+  CSP `frame-ancestors`) and a browser gives JavaScript no reliable way to detect that — if nothing
+  has loaded after a few seconds the view also shows a hint saying so. An `https` application
+  cannot embed an `http` destination at all; the same button is the way out.
+
+  The tab URL is `/external-content/<menu id>` and never carries the destination, so no one can
+  hand-craft a link that makes your application frame an arbitrary site. Pressing F5 on an embedded
+  tab restores both the frame and the tab title from `sessionStorage`. Opening that URL in a *fresh*
+  browser tab can only work if your `SidebarService.getMenuFromUrl()` resolves
+  `/external-content/<id>`; otherwise the view says the content is unavailable and asks the user to
+  reopen it from the menu.
+
+- **`EXTERNAL_CONTENT_CONFIGS`** — `allowedOrigins` (default `[]`, meaning any `http`/`https`
+  origin) and `slowFrameHintDelay` (default 5000 ms). **Populate `allowedOrigins` in production.**
+  Embedded and new-tab destinations are already rejected unless they are absolute `http`/`https`
+  URLs, which stops a `javascript:` or `data:` URL in your menu table from executing in your users’
+  session; an origin allowlist narrows what is left from “any site on the internet” to your known
+  report hosts. The iframe is sandboxed with a fixed, non-configurable token list that withholds
+  `allow-top-navigation`, so a framed site cannot navigate your application away. Do not point an
+  embedded item at your own application’s origin — use an internal route for that.
+
+- **`ICurrentUserInfo.email`, `.userID`, `.username`** (all optional) — the values behind
+  `{email}`, `{userId}` and `{userName}`. `username` was already being persisted in the base64
+  `userInfo` entry and is now simply typed, so `{userName}` needs no backend change; `email` and
+  `userID` must be added to your sign-in and refresh responses.
+
+- **Translations** for the embedded view under `i18n/external-content/`, already included in
+  `ZAMBON_SHARED_I18N_RESOURCES`.
+
 ### Changed
 
 ### Deprecated
@@ -21,7 +85,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A deep link whose URL the menu API cannot resolve no longer surfaces an unhandled error.**
+  `MainLayoutComponent` resolves a deep-linked tab’s title through `SidebarService.getMenuFromUrl()`
+  and had no error handler, so a 404 became an unhandled rejection in the console. The title is
+  best-effort and the failure is now swallowed — which matters more now that the embedded-content
+  route is a URL shape most menu endpoints do not know.
+
 ### ⚠ Breaking Changes / Migration
+
+- **Requires `@zambon-dev/library` 1.4.0 or later.** `SidebarMenuOpenMode`,
+  `toSidebarMenuOpenMode` and `SidebarService.menuExternalUrlSelected` ship in that release. The
+  declared peer range still allows older versions, so upgrade both packages together.
+- **To use external menu items, register `externalContentRoutes`** as children of
+  `MainLayoutComponent` (snippet above), and make your menu endpoint return `openMode`. The
+  resolver accepts it as the camelCase string (`"internal"`, `"externalNewTab"`,
+  `"externalEmbedded"`, matched case-insensitively) or as the enum ordinal (`0`, `1`, `2`), so a
+  plain ASP.NET Core enum property works with no converter.
+- **If your `TranslateLoader` hand-lists prefixes** instead of spreading
+  `ZAMBON_SHARED_I18N_RESOURCES`, add `assets/i18n/zambon-dev/shared/external-content/`.
+- Nothing else changes: applications with no `openMode` on any menu item behave exactly as before
+  and need no action.
 
 ## [2.0.0] - 2026-07-30
 

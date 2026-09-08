@@ -1,0 +1,39 @@
+@if (isUnavailable) {
+    <div class="external-content-message">
+        <i class="fa-solid fa-link-slash"></i>
+        <span class="external-content-message-title">{{ 'ExternalContent-Unavailable-Title' | translate }}</span>
+        <span>{{ 'ExternalContent-Unavailable-Message' | translate }}</span>
+    </div>
+} @else if (isBlocked) {
+    <div class="external-content-message">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span class="external-content-message-title">{{ 'ExternalContent-Blocked-Title' | translate }}</span>
+        <span>{{ 'ExternalContent-Blocked-Message' | translate }}</span>
+    </div>
+} @else {
+    <div class="external-content-toolbar">
+        <button class="btn gray-300" type="button" (click)="onReload()">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>{{ 'ExternalContent-Reload' | translate }}</span>
+        </button>
+
+        <button class="btn gray-300" type="button" (click)="onOpenInNewTab()">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            <span>{{ 'ExternalContent-OpenInNewTab' | translate }}</span>
+        </button>
+    </div>
+
+    @if (isSlow) {
+        <div class="external-content-hint">{{ 'ExternalContent-SlowHint' | translate }}</div>
+    }
+
+    @if (frameUrl) {
+        <iframe class="external-content-frame"
+        [src]="frameUrl"
+        [attr.sandbox]="sandbox"
+        [attr.title]="label"
+        referrerpolicy="strict-origin-when-cross-origin"
+        (load)="onFrameLoad()">
+        </iframe>
+    }
+}

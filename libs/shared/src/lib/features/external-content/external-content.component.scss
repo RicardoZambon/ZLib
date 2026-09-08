@@ -22,8 +22,20 @@
 // square through the curve. The container clips instead.
 .external-content-frame-container {
     @include panel;
-    @apply flex flex-grow overflow-hidden;
+    @apply relative flex flex-grow overflow-hidden;
     min-height: 0;
+}
+
+// Covers the frame while it loads. Opaque on purpose: a reload has to visibly clear the content,
+// otherwise the previous render stays on screen and nothing tells the user anything happened.
+// Same spinner and sizing as lib-data-grid's own loading row.
+.external-content-loading {
+    @apply absolute inset-0 z-10 flex items-center justify-center gap-2;
+    @apply bg-white text-gray-500;
+
+    svg {
+        @apply h-6 w-6 min-w-6 min-h-6 animate-spin;
+    }
 }
 
 .external-content-frame {

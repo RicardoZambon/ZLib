@@ -2,10 +2,13 @@
      application's ribbon like every other screen's. -->
 <ng-template #ribbon>
     <lib-ribbon-group [label]="'RibbonGroup-Page' | translate">
+        <!-- Same icon and label as framework-button-refresh, so reloading a report reads as the
+             same action as refreshing a grid. `loading` is what spins it while the frame loads. -->
         <framework-button
-        icon="fa-rotate-right"
-        label="ExternalContent-Reload"
-        [disabled]="!frameUrl"
+        icon="fa-sync-alt"
+        label="Button-Refresh"
+        [disabled]="!resolvedUrl"
+        [loading]="isFrameLoading"
         (action)="onReload()">
         </framework-button>
 
@@ -35,8 +38,11 @@
         <div class="external-content-hint">{{ 'ExternalContent-SlowHint' | translate }}</div>
     }
 
-    @if (frameUrl) {
+    @if (frameUrl || isFrameLoading) {
         <!--
+            The container stays mounted across a reload, which briefly clears frameUrl, so the panel
+            does not flicker out and back. What goes away is the frame itself, on purpose.
+
             sandbox and referrerpolicy are STATIC attributes on purpose. Angular rejects `sandbox`
             as a binding on an <iframe> outright (NG0910) — it may only be a static attribute — and
             the whole element then fails to render.
@@ -52,13 +58,26 @@
             - allow-popups-to-escape-sandbox keeps print and download popups usable.
         -->
         <div class="external-content-frame-container">
-            <iframe class="external-content-frame"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
-            referrerpolicy="strict-origin-when-cross-origin"
-            [src]="frameUrl"
-            [attr.title]="label | translate"
-            (load)="onFrameLoad()">
-            </iframe>
+            @if (isFrameLoading) {
+                <div class="external-content-loading">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+
+                    <span>{{ 'Loading' | translate }}</span>
+                </div>
+            }
+
+            @if (frameUrl) {
+                <iframe class="external-content-frame"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads"
+                referrerpolicy="strict-origin-when-cross-origin"
+                [src]="frameUrl"
+                [attr.title]="label | translate"
+                (load)="onFrameLoad()">
+                </iframe>
+            }
         </div>
     }
 }

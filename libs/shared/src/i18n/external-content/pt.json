@@ -2,7 +2,6 @@
   "ExternalContent-Blocked-Title": "Não é possível exibir",
   "ExternalContent-Blocked-Message": "Este item de menu aponta para um endereço não permitido. Peça a um administrador para revisá-lo.",
   "ExternalContent-OpenInNewTab": "Abrir em nova aba do navegador",
-  "ExternalContent-Reload": "Recarregar",
   "ExternalContent-SlowHint": "Ainda carregando. Alguns sites não permitem ser exibidos dentro de outra aplicação — tente abrir em uma nova aba do navegador.",
   "ExternalContent-Unavailable-Title": "Conteúdo indisponível",
   "ExternalContent-Unavailable-Message": "Reabra este item pelo menu para carregá-lo.",

@@ -50,9 +50,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   them opens a tab that immediately bounces to the home route.
 
   The view is an ordinary `TabViewBase` hosted by `DefaultTabViewComponent`, so its actions appear
-  in the application ribbon (a **Page** group with **Reload** and **Open in a new browser tab**)
+  in the application ribbon (a **Page** group with **Refresh** and **Open in a new browser tab**)
   and look like every other screen’s — the shipped `externalContentRoutes` already wires that host
-  up, which is the other reason not to hand-write the routes.
+  up, which is the other reason not to hand-write the routes. **Refresh** carries the same icon and
+  label as `framework-button-refresh`, because reloading a report is the same action as refreshing
+  a grid.
+
+  Refreshing genuinely tears the frame down and builds a new one — a cross-origin frame cannot be
+  navigated any other way — so the old render visibly goes away instead of sitting there while you
+  wonder whether anything happened. The button spins and the panel shows a loading overlay until
+  the destination reports `load`, or until the slow-frame delay elapses, so a destination that
+  never reports one cannot leave the controls stuck.
 
   **Open in a new browser tab** is always available, because many sites refuse to be embedded
   (`X-Frame-Options`, CSP `frame-ancestors`) and a browser gives JavaScript no reliable way to

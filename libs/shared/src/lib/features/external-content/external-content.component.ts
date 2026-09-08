@@ -35,6 +35,7 @@ export class ExternalContentComponent extends TabViewBase implements OnInit {
   //#region Variables
   protected frameUrl?: SafeResourceUrl;
   protected isBlocked: boolean = false;
+  protected isFrameLoading: boolean = false;
   protected isSlow: boolean = false;
   protected isUnavailable: boolean = false;
   protected label: string = '';
@@ -82,6 +83,8 @@ export class ExternalContentComponent extends TabViewBase implements OnInit {
   //#region Event handlers
   protected onFrameLoad(): void {
     this.clearSlowHint();
+
+    this.isFrameLoading = false;
     this.isSlow = false;
   }
 
@@ -92,16 +95,24 @@ export class ExternalContentComponent extends TabViewBase implements OnInit {
   protected onReload(): void {
     const url: SafeResourceUrl | undefined = this.frameUrl;
 
-    if (!url) {
+    if (!url || this.isFrameLoading) {
       return;
     }
 
-    // The frame is cross-origin, so its location cannot be touched from here. Tearing the element
-    // down and rebuilding it on the next microtask is what actually reloads the destination.
+    // The frame is cross-origin, so its location cannot be touched from here: destroying the
+    // element and building a new one is the only way to make it navigate again. That also clears
+    // the previous render, which is the point -- otherwise a reload leaves the old content on
+    // screen and the user cannot tell whether anything happened.
+    //
+    // The rebuild has to wait for a macrotask, not a microtask. Angular coalesces changes within a
+    // change-detection cycle, so setting frameUrl back before the next tick means @if sees the
+    // value go A -> undefined -> A and never toggles: the element is never destroyed, nothing
+    // navigates, no `load` ever fires, and the view spins until the timeout gives up. Yielding to
+    // a timeout lets a cycle run with the frame unmounted, which is what really tears it down.
     this.frameUrl = undefined;
-    this.startSlowHint();
+    this.isFrameLoading = true;
 
-    Promise.resolve().then(() => this.frameUrl = url);
+    setTimeout(() => this.displayFrame(url));
   }
   //#endregion
 
@@ -162,7 +173,12 @@ export class ExternalContentComponent extends TabViewBase implements OnInit {
     // Trusted once, into a field. From a getter or a pipe this would hand back a new
     // SafeResourceUrl on every change-detection pass, and Angular would re-set the iframe's src
     // and reload the destination each time.
-    this.frameUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    this.displayFrame(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+  }
+
+  private displayFrame(url: SafeResourceUrl): void {
+    this.isFrameLoading = true;
+    this.frameUrl = url;
 
     this.startSlowHint();
   }
@@ -175,7 +191,13 @@ export class ExternalContentComponent extends TabViewBase implements OnInit {
     // usually fires `load` immediately and renders the browser's own error page, in which case
     // this hint never appears -- the ribbon's "open in a new browser tab" button is the actual
     // way out, and it is always present.
-    this.slowHintTimeout = setTimeout(() => this.isSlow = true, this.configs.slowFrameHintDelay);
+    this.slowHintTimeout = setTimeout(() => {
+      // Stop claiming it is loading. A destination that never reports `load` -- a refused frame
+      // among them -- would otherwise spin forever and keep the actions disabled; hand the
+      // controls back and let the hint do the explaining.
+      this.isFrameLoading = false;
+      this.isSlow = true;
+    }, this.configs.slowFrameHintDelay);
   }
   //#endregion
 }

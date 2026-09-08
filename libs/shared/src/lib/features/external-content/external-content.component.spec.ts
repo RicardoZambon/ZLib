@@ -33,6 +33,7 @@ describe(ExternalContentComponent.name, () => {
       externalContentService: { find: jest.fn(() => of(entry)) },
       externalUrlResolverService: { isAllowed, resolve },
       isBlocked: false,
+      isFrameLoading: false,
       isSlow: false,
       isUnavailable: false,
       label: '',
@@ -168,6 +169,76 @@ describe(ExternalContentComponent.name, () => {
     (<{ onOpenInNewTab(): void }><unknown>component).onOpenInNewTab();
 
     expect(open).toHaveBeenCalledWith('https://reports/r?u=42', '_blank', 'noopener,noreferrer');
+  });
+
+  describe('loading feedback', () => {
+    function reload(): void {
+      (<{ onReload(): void }><unknown>component).onReload();
+    }
+
+    it('reports the frame as loading as soon as it is mounted, so the ribbon button spins', () => {
+      component.ngOnInit();
+
+      expect(read('isFrameLoading')).toBe(true);
+    });
+
+    it('stops reporting loading once the frame reports load', () => {
+      component.ngOnInit();
+
+      (<{ onFrameLoad(): void }><unknown>component).onFrameLoad();
+
+      expect(read('isFrameLoading')).toBe(false);
+    });
+
+    it('clears the frame immediately on reload, so the old content visibly goes away', () => {
+      component.ngOnInit();
+      (<{ onFrameLoad(): void }><unknown>component).onFrameLoad();
+      const mounted: unknown = read('frameUrl');
+
+      reload();
+
+      expect(read('frameUrl')).toBeUndefined();
+      expect(read('isFrameLoading')).toBe(true);
+    });
+
+    it('rebuilds the frame only after yielding, so @if really destroys the element', () => {
+      component.ngOnInit();
+      (<{ onFrameLoad(): void }><unknown>component).onFrameLoad();
+      const mounted: unknown = read('frameUrl');
+
+      reload();
+
+      // A microtask is not enough: Angular coalesces A -> undefined -> A inside one
+      // change-detection cycle and the iframe is never torn down, so nothing navigates.
+      return Promise.resolve().then(() => {
+        expect(read('frameUrl')).toBeUndefined();
+
+        jest.advanceTimersByTime(0);
+
+        expect(read('frameUrl')).toBe(mounted);
+        expect(read('isFrameLoading')).toBe(true);
+      });
+    });
+
+    it('ignores a reload while one is already in flight', () => {
+      // ngOnInit leaves the frame loading, so this reload has to be a no-op: tearing the frame
+      // down again would restart a load that has not finished.
+      component.ngOnInit();
+      const mounted: unknown = read('frameUrl');
+
+      reload();
+
+      expect(read('frameUrl')).toBe(mounted);
+    });
+
+    it('gives up on loading when the frame never reports load, rather than spinning forever', () => {
+      component.ngOnInit();
+
+      jest.advanceTimersByTime(configs.slowFrameHintDelay);
+
+      expect(read('isFrameLoading')).toBe(false);
+      expect(read('isSlow')).toBe(true);
+    });
   });
 });
 

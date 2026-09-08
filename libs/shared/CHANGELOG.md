@@ -115,8 +115,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   resolver accepts it as the camelCase string (`"internal"`, `"externalNewTab"`,
   `"externalEmbedded"`, matched case-insensitively) or as the enum ordinal (`0`, `1`, `2`), so a
   plain ASP.NET Core enum property works with no converter.
-- **If your `TranslateLoader` hand-lists prefixes** instead of spreading
-  `ZAMBON_SHARED_I18N_RESOURCES`, add `assets/i18n/zambon-dev/shared/external-content/`.
+- **The embedded view needs both i18n bundles registered.** Its own strings ship in this package
+  (`ZAMBON_SHARED_I18N_RESOURCES`, under `assets/i18n/zambon-dev/shared/external-content/`), but the
+  ribbon reuses three keys owned by `@zambon-dev/framework` — `RibbonGroup-Page`, `Button-Refresh`
+  and `Loading` — so `ZAMBON_FRAMEWORK_I18N_RESOURCES` has to be registered too, or those render as
+  raw keys. Any application that already uses framework buttons registers it; if your
+  `TranslateLoader` hand-lists prefixes instead of spreading the two constants, add both.
 - Nothing else changes: applications with no `openMode` on any menu item behave exactly as before
   and need no action.
 

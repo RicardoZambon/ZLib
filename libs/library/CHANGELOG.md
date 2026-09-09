@@ -13,6 +13,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`SidebarConfigs.shouldDeriveAreasFromRootMenus`** — derive region headers from the menu tree
+  instead of from `SidebarMenu.region`. Off by default, so nothing changes until you opt in.
+
+  With it on, a top-level menu that has children **and no URL** stops being a collapsible node and
+  becomes an area header, with its children rendered flat beneath it as top-level items — icons
+  included. A top-level menu that has its own URL stays an item, and a parent that carries a URL
+  stays collapsible, so only the menus that were already acting purely as groups change shape.
+
+  The point is where the grouping lives. `region` is a label repeated on every item that belongs to
+  a group, matched by exact string equality: a typo silently splits one area into two, and the
+  area has no row of its own to carry an order or a translation. Derived from the tree, the area
+  *is* a menu row — it already has a translated label and an order — and nothing has to be
+  duplicated across its items.
+
+  The children of an area are fetched **eagerly**, at load, because they are rendered without a
+  click and the lazy load a collapsible parent relies on would never fire. That is one extra
+  request per area. `region` keeps working exactly as before for anyone who prefers it; the two
+  mechanisms are independent and the flag chooses between them.
+
+- **`SidebarService.loadChildrenFor(parentMenu)`** — loads a parent’s children and returns them as
+  an observable, for callers that need them before the user clicks. `loadChildren` is unchanged: it
+  is still the fire-and-forget variant that raises `childrenLoading` and `childrenFailed`, and it
+  now delegates to this one.
+
 ### Changed
 
 ### Deprecated
@@ -22,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### ⚠ Breaking Changes / Migration
+
+None. `shouldDeriveAreasFromRootMenus` defaults to `false`, so a sidebar keeps grouping by
+`region` and keeps rendering top-level parents as collapsible nodes until you set it.
 
 ## [1.4.1] - 2026-09-08
 

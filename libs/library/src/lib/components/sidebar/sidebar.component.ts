@@ -1,7 +1,7 @@
 import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { AfterViewInit, Component, HostListener, inject, OnInit } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { merge, take, takeUntil } from 'rxjs';
+import { forkJoin, map, merge, Observable, of, switchMap, take, takeUntil } from 'rxjs';
 import { SIDEBAR_CONFIGS, SidebarConfigs, SidebarMenu, SidebarRegion } from '../../models';
 import { SidebarService } from '../../services';
 import { BaseComponent } from '../base.component';
@@ -108,7 +108,10 @@ export class SidebarComponent extends BaseComponent implements AfterViewInit, On
       .subscribe((_menu: SidebarMenu) => this.deactivate());
 
     this.sidebarService.loadRoot()
-      .pipe(take(1))
+      .pipe(
+        take(1),
+        switchMap((menus: SidebarMenu[]) => this.loadAreaChildren(menus)),
+      )
       .subscribe({
         next: (menus: SidebarMenu[]) => {
           this.menus = menus;
@@ -144,9 +147,14 @@ export class SidebarComponent extends BaseComponent implements AfterViewInit, On
     return region.name ?? '';
   }
 
+  /** Whether this top-level menu stands for an area rather than a destination of its own. */
+  private isArea(menu: SidebarMenu): boolean {
+    return menu.childCount > 0 && (menu.url?.length ?? 0) === 0;
+  }
+
   // Group top-level menus into regions by their optional `region` label, preserving
   // first-appearance order. Ungrouped menus fall into a single header-less region.
-  private groupIntoRegions(menus: SidebarMenu[]): SidebarRegion[] {
+  private groupByRegionLabel(menus: SidebarMenu[]): SidebarRegion[] {
     const regions: SidebarRegion[] = [];
     const byName: Map<string | undefined, SidebarRegion> = new Map<string | undefined, SidebarRegion>();
 
@@ -161,6 +169,57 @@ export class SidebarComponent extends BaseComponent implements AfterViewInit, On
     });
 
     return regions;
+  }
+
+  // Derive the regions from the tree: an area menu becomes a header and lends the group its own
+  // children, so the area carries one translated label and one order instead of a string repeated
+  // across every item. Anything that is not an area keeps falling into a header-less region, which
+  // is created where the first such item appears so the original ordering still holds.
+  private groupByRootMenus(menus: SidebarMenu[]): SidebarRegion[] {
+    const regions: SidebarRegion[] = [];
+    let ungrouped: SidebarRegion | undefined;
+
+    menus.forEach((menu: SidebarMenu) => {
+      if (this.isArea(menu)) {
+        regions.push({ name: menu.label, items: menu.children });
+        return;
+      }
+
+      if (!ungrouped) {
+        ungrouped = { name: undefined, items: [] };
+        regions.push(ungrouped);
+      }
+
+      ungrouped.items.push(menu);
+    });
+
+    return regions;
+  }
+
+  private groupIntoRegions(menus: SidebarMenu[]): SidebarRegion[] {
+    return this.sidebarConfigs.shouldDeriveAreasFromRootMenus
+      ? this.groupByRootMenus(menus)
+      : this.groupByRegionLabel(menus);
+  }
+
+  /**
+   * Fetches the children of every area up front, because they are rendered flat rather than
+   * behind a click, so the lazy load a collapsible parent relies on would never be triggered.
+   */
+  private loadAreaChildren(menus: SidebarMenu[]): Observable<SidebarMenu[]> {
+    if (!this.sidebarConfigs.shouldDeriveAreasFromRootMenus) {
+      return of(menus);
+    }
+
+    const areas: SidebarMenu[] = menus.filter((menu: SidebarMenu) => this.isArea(menu));
+
+    // forkJoin never emits on an empty array, so a menu with no areas has to short-circuit.
+    if (areas.length === 0) {
+      return of(menus);
+    }
+
+    return forkJoin(areas.map((area: SidebarMenu) => this.sidebarService.loadChildrenFor(area)))
+      .pipe(map(() => menus));
   }
 
   private deactivate(): void {

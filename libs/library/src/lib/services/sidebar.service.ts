@@ -43,21 +43,30 @@ export abstract class SidebarService {
   public loadChildren(parentMenu: SidebarMenu): void {
     this.childrenLoading.emit(parentMenu);
 
-    this.loadMenus(parentMenu)
-      .pipe(
-        take(1),
-        map((menus: SidebarMenu[]) => menus.map((menu: SidebarMenu) => new SidebarMenu(menu))),
-      )
+    this.loadChildrenFor(parentMenu)
       .subscribe({
-        next: (childrenMenus: SidebarMenu[]) => {
-          parentMenu.children = childrenMenus;
-          childrenMenus.forEach((childMenu: SidebarMenu) => childMenu.parent = parentMenu);
-        },
         error: (exception: HttpErrorResponse) => {
           this.childrenFailed.emit(parentMenu);
           throw exception;
         }
       });
+  }
+
+  /**
+   * Loads a parent's children and hands them back, for callers that need them before the user
+   * clicks -- a sidebar rendering areas flat has to have them up front. {@link loadChildren} is
+   * the fire-and-forget variant that also raises the loading and failure events.
+   */
+  public loadChildrenFor(parentMenu: SidebarMenu): Observable<SidebarMenu[]> {
+    return this.loadMenus(parentMenu)
+      .pipe(
+        take(1),
+        map((menus: SidebarMenu[]) => menus.map((menu: SidebarMenu) => new SidebarMenu(menu))),
+        tap((childrenMenus: SidebarMenu[]) => {
+          parentMenu.children = childrenMenus;
+          childrenMenus.forEach((childMenu: SidebarMenu) => childMenu.parent = parentMenu);
+        }),
+      );
   }
 
   public loadRoot(): Observable<SidebarMenu[]> {

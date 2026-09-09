@@ -13,6 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### ⚠ Breaking Changes / Migration
+
+## [1.5.0] - 2026-09-09
+
+### Added
+
 - **`SidebarConfigs.shouldDeriveAreasFromRootMenus`** — derive region headers from the menu tree
   instead of from `SidebarMenu.region`. Off by default, so nothing changes until you opt in.
 
@@ -36,14 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an observable, for callers that need them before the user clicks. `loadChildren` is unchanged: it
   is still the fire-and-forget variant that raises `childrenLoading` and `childrenFailed`, and it
   now delegates to this one.
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
 
 ### ⚠ Breaking Changes / Migration
 
@@ -243,7 +249,8 @@ config options and the `getUserProfile()` method still exist but are no longer c
   available via [GitHub Releases](https://github.com/RicardoZambon/ZLibraries/releases) and the
   `library-v*` tags.
 
-[Unreleased]: https://github.com/RicardoZambon/ZLibraries/compare/library-v1.4.1...HEAD
+[Unreleased]: https://github.com/RicardoZambon/ZLibraries/compare/library-v1.5.0...HEAD
+[1.5.0]: https://github.com/RicardoZambon/ZLibraries/releases/tag/library-v1.5.0
 [1.4.1]: https://github.com/RicardoZambon/ZLibraries/releases/tag/library-v1.4.1
 [1.4.0]: https://github.com/RicardoZambon/ZLibraries/releases/tag/library-v1.4.0
 [1.3.2]: https://github.com/RicardoZambon/ZLibraries/releases/tag/library-v1.3.2

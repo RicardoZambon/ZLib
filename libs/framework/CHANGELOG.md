@@ -21,6 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Returning to an already-open tab no longer crashes with `Maximum call stack size exceeded`.**
+  It affected any screen whose route nests two empty-path levels — the shape every list screen uses:
+  `path: ''` with `DefaultTabViewComponent`, and a child `path: ''` with the list component.
+
+  `CustomReuseStrategy` keyed its detached-view cache on `route.component.name`, and a production
+  build renames every class: esbuild wraps each component as `X = (() => { class i { } return i; })()`,
+  so the name is one mangled letter that the whole chunk shares. An empty path contributes no URL
+  segment, so both levels also resolved to the same URL — which left the two cache keys identical.
+  Storing one handle overwrote the other, both route levels were then handed the same detached view,
+  and Angular blew the stack building a router state whose node was its own descendant.
+
+  The key is now built from the component's **identity** and the route's depth rather than its name.
+  Applications need to change nothing. Worth knowing when reading old reports of this crash: it only
+  ever reproduced in a minified build — `ng serve` keeps real class names — and only on the screens
+  whose chunk happened to mangle to the same letter as the framework's, so a rebuild could move the
+  symptom from one screen to another.
+
 ### ⚠ Breaking Changes / Migration
 
 ## [1.3.0] - 2026-07-30

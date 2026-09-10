@@ -14,6 +14,8 @@ export class CustomReuseStrategy implements RouteReuseStrategy {
 
   private applicationRef: ApplicationRef = inject(ApplicationRef);
   private cachedHandles: { [key: string]: DetachedRouteHandle | null } = {};
+  private componentIDs: WeakMap<object, number> = new WeakMap<object, number>();
+  private nextComponentID = 1;
   //#endregion
 
   //#region Properties
@@ -107,8 +109,45 @@ export class CustomReuseStrategy implements RouteReuseStrategy {
       url = this.clones[url];
     }
 
-    const componentName: string = route.component?.name ?? '';
-    return `${url}-${componentName}`;
+    // The component is identified by identity, never by name. A production build renames every
+    // class: esbuild wraps each component as `X = (() => { class i { } return i; })()`, so
+    // `component.name` is a single mangled letter that the whole chunk shares. Nested empty-path
+    // routes already resolve to the same URL, because an empty path contributes no segment, so a
+    // key built from the name collapsed a screen's tab view and its list into one entry: storing
+    // one overwrote the other, both levels were then handed the same detached view, and Angular
+    // blew the stack building a router state whose node was its own descendant. That reproduced
+    // only in a minified build, and only on the screens whose chunk happened to mangle to the
+    // same letter as the framework's.
+    //
+    // The depth is part of the key too, so two sibling routes sharing a component type under one
+    // URL cannot collide either.
+    return `${url}-${this.getRouteDepth(route)}-${this.getComponentID(route.component)}`;
+  }
+
+  private getComponentID(component: ActivatedRouteSnapshot['component']): number {
+    if (typeof component !== 'function') {
+      return 0;
+    }
+
+    let componentID: number | undefined = this.componentIDs.get(component);
+    if (componentID === undefined) {
+      componentID = this.nextComponentID++;
+      this.componentIDs.set(component, componentID);
+    }
+
+    return componentID;
+  }
+
+  private getRouteDepth(route: ActivatedRouteSnapshot): number {
+    let depth = 0;
+    let current: ActivatedRouteSnapshot | null = route.parent;
+
+    while (current) {
+      depth++;
+      current = current.parent;
+    }
+
+    return depth;
   }
 
   private getUrlFromRoute(route: ActivatedRouteSnapshot): string {

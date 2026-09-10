@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+### ⚠ Breaking Changes / Migration
+
+## [1.3.1] - 2026-09-10
+
+### Fixed
+
 - **Returning to an already-open tab no longer crashes with `Maximum call stack size exceeded`.**
   It affected any screen whose route nests two empty-path levels — the shape every list screen uses:
   `path: ''` with `DefaultTabViewComponent`, and a child `path: ''` with the list component.
@@ -37,8 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ever reproduced in a minified build — `ng serve` keeps real class names — and only on the screens
   whose chunk happened to mangle to the same letter as the framework's, so a rebuild could move the
   symptom from one screen to another.
-
-### ⚠ Breaking Changes / Migration
 
 ## [1.3.0] - 2026-07-30
 
@@ -138,7 +142,8 @@ None.
   available via [GitHub Releases](https://github.com/RicardoZambon/ZLibraries/releases) and the
   `framework-v*` tags.
 
-[Unreleased]: https://github.com/RicardoZambon/ZLibraries/compare/framework-v1.3.0...HEAD
+[Unreleased]: https://github.com/RicardoZambon/ZLibraries/compare/framework-v1.3.1...HEAD
+[1.3.1]: https://github.com/RicardoZambon/ZLibraries/releases/tag/framework-v1.3.1
 [1.3.0]: https://github.com/RicardoZambon/ZLibraries/releases/tag/framework-v1.3.0
 [1.2.1]: https://github.com/RicardoZambon/ZLibraries/releases/tag/framework-v1.2.1
 [1.2.0]: https://github.com/RicardoZambon/ZLibraries/releases/tag/framework-v1.2.0
